@@ -14,7 +14,7 @@ The client can call the functions of this smart contract written in Solidity.
 
 ###### Useful links:
 
-1. Remix Solidity IDE (to write and compile this smart contract). Available at: https://remix.ethereum.org
+1. Remix Solidity IDE (to write and compile this smart contract): https://remix.ethereum.org
 2. ETH faucets for the following testnets (to deploy this smart contract):
   - Ropsten: https://faucet.ropsten.be
   - Kovan (requires a GitHub account to login): https://faucet.kovan.network

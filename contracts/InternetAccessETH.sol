@@ -23,7 +23,7 @@ contract InternetAccessETH is Ownable {
   mapping (address => Connection) public connections;
 
   struct OnFlyConnection {
-    bool free;
+    bool allocated;
     address user;
   }
 
@@ -51,7 +51,7 @@ contract InternetAccessETH is Ownable {
     if (withStake)
       stakeDue.add(msg.value);
     onFlyConnections[onFlyNum].user = msg.sender;
-    onFlyConnections[onFlyNum].free = false;
+    onFlyConnections[onFlyNum].allocated = true;
     return(withStake);
   }
 
@@ -60,7 +60,7 @@ contract InternetAccessETH is Ownable {
   */
   function checkConnectionAvailable(uint _onFlyNum) public view returns (bool) {
     uint256 i = 0;
-    while (i < 200 && !onFlyConnections[i].free) i++;
+    while (i < 200 && onFlyConnections[i].allocated) i++;
     if (i < 200) {
       _onFlyNum = i;
       return true;
@@ -80,7 +80,7 @@ contract InternetAccessETH is Ownable {
     uint i;
     availableEarnings = address(this).balance.sub(_balanceLeft);
     while (i < 200 && availableEarnings > 0) {
-      if (!onFlyConnections[i].free) {
+      if (onFlyConnections[i].allocated) {
         if (connections[onFlyConnections[i].user].blockNumber > lastAllowedBlock) {
           availableEarnings.sub(connections[onFlyConnections[i].user].amount);
           if (connections[onFlyConnections[i].user].withStake)
@@ -89,7 +89,7 @@ contract InternetAccessETH is Ownable {
           onFlyBalance.sub(connections[onFlyConnections[i].user].amount);
           if (connections[onFlyConnections[i].user].withStake)
             stakeDue.sub(connections[onFlyConnections[i].user].amount);
-          onFlyConnections[i].free = true;
+          onFlyConnections[i].allocated = false;
         }
       }
       i++;
@@ -106,8 +106,8 @@ contract InternetAccessETH is Ownable {
   function penalize () public {
     uint256 i = 0;
     while (i < 200 && onFlyConnections[i].user != msg.sender) i++;
-    require(i < 200 && !onFlyConnections[i].free);
-    onFlyConnections[i].free = true;
+    require(i < 200 && onFlyConnections[i].allocated);
+    onFlyConnections[i].allocated = false;
     onFlyBalance.sub(connections[msg.sender].amount);
     if (connections[msg.sender].withStake) {
       stakeDue.sub(connections[msg.sender].amount);

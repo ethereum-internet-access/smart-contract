@@ -1,11 +1,10 @@
 pragma solidity ^0.5.9;
 
 import "./SafeMath.sol";
+import "./Ownable.sol";
 
-contract InternetAccessETH {
+contract InternetAccessETH is Ownable {
   using SafeMath for uint256;
-
-  address payable owner;
 
   uint256 private _minPaymnt = 2000000000000000; // 0.002 ETH $0.5 at Aug.02.19
   uint256 private _maxPaymnt = 100000000000000000; // 0.1 ETH $22 at Aug.02.19
@@ -27,7 +26,6 @@ contract InternetAccessETH {
 
   OnFlyConnections[200] public OnFlyCon;
   constructor() public {
-    owner = msg.sender;
   }
 
   /**
@@ -75,7 +73,7 @@ contract InternetAccessETH {
      Some balance is left, in order to afford stake on future connections.
   */
   function collectEarnings(uint _balanceLeft) public {
-    require (msg.sender == owner);
+    require (isOwner(), "Only contract owner can collect earnings");
     uint AvaiEarn; /** Available earnings */
     uint LastAllowedBlock = block.number.sub(6500); /** 24h aprox. */
     uint i;
@@ -97,7 +95,7 @@ contract InternetAccessETH {
       i++;
     }
     require(AvaiEarn > 0, "There isn't balance enough");
-    owner.transfer(AvaiEarn);
+    msg.sender.transfer(AvaiEarn);
   }
 
   /**

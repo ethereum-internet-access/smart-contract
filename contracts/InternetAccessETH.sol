@@ -14,6 +14,8 @@ contract InternetAccessETH is Ownable {
   uint256 private onFlyBalance;
   uint256 private stakeDue;
 
+  event ConnectionRequest(address indexed _from, uint256 _value, bool _stake, uint256 _balance);
+
   struct Connection {
     uint256 blockNumber;
     uint256 amount;
@@ -27,7 +29,7 @@ contract InternetAccessETH is Ownable {
     address user;
   }
 
-  OnFlyConnection[200] public onFlyConnections;
+  OnFlyConnection[10] public onFlyConnections;
 
   /**
      @dev Returns contract name.
@@ -39,20 +41,24 @@ contract InternetAccessETH is Ownable {
   /**
      @dev Requests an ETH paid Internet connection.
   */
-  function reqConnectionWithETH() public payable returns (bool) {
+  function reqConnectionWithETH() public payable {
     uint onFlyNum;
-    require(checkConnectionAvailable(onFlyNum) && msg.value >= minPayment && msg.value <= maxPayment);
+    require(checkConnectionAvailable(onFlyNum), "No connection available");
+    require(msg.value >= minPayment, "Value under minimum");
+    require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;
     withStake = (msg.value <= address(this).balance.sub(onFlyBalance).sub(stakeDue));
     connections[msg.sender].blockNumber = block.number;
     connections[msg.sender].amount = msg.value;
     connections[msg.sender].withStake = withStake;
     onFlyBalance.add(msg.value);
-    if (withStake)
+    if (withStake) {
       stakeDue.add(msg.value);
+    }
     onFlyConnections[onFlyNum].user = msg.sender;
     onFlyConnections[onFlyNum].allocated = true;
-    return(withStake);
+    emit ConnectionRequest(msg.sender, msg.value, withStake, address(this).balance);
+    return;
   }
 
   /**
@@ -60,8 +66,8 @@ contract InternetAccessETH is Ownable {
   */
   function checkConnectionAvailable(uint _onFlyNum) public view returns (bool) {
     uint256 i = 0;
-    while (i < 200 && onFlyConnections[i].allocated) i++;
-    if (i < 200) {
+    while (i < 10 && onFlyConnections[i].allocated) i++;
+    if (i < 10) {
       _onFlyNum = i;
       return true;
     } else {
@@ -79,7 +85,7 @@ contract InternetAccessETH is Ownable {
     uint lastAllowedBlock = block.number.sub(6500); /** 24h aprox. */
     uint i;
     availableEarnings = address(this).balance.sub(_balanceLeft);
-    while (i < 200 && availableEarnings > 0) {
+    while (i < 10 && availableEarnings > 0) {
       if (onFlyConnections[i].allocated) {
         if (connections[onFlyConnections[i].user].blockNumber > lastAllowedBlock) {
           availableEarnings.sub(connections[onFlyConnections[i].user].amount);
@@ -105,8 +111,8 @@ contract InternetAccessETH is Ownable {
   */
   function penalize () public {
     uint256 i = 0;
-    while (i < 200 && onFlyConnections[i].user != msg.sender) i++;
-    require(i < 200 && onFlyConnections[i].allocated);
+    while (i < 10 && onFlyConnections[i].user != msg.sender) i++;
+    require(i < 10 && onFlyConnections[i].allocated);
     onFlyConnections[i].allocated = false;
     onFlyBalance.sub(connections[msg.sender].amount);
     if (connections[msg.sender].withStake) {

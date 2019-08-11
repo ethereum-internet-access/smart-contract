@@ -47,7 +47,7 @@ contract InternetAccessETH is Ownable {
     require(msg.value >= minPayment, "Value under minimum");
     require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;
-    withStake = (msg.value <= address(this).balance.sub(onFlyBalance).sub(stakeDue));
+    withStake = (address(this).balance.sub(msg.value).sub(onFlyBalance).sub(stakeDue) > 0);
     connections[msg.sender].blockNumber = block.number;
     connections[msg.sender].amount = msg.value;
     connections[msg.sender].withStake = withStake;

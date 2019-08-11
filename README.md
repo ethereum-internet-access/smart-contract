@@ -54,6 +54,8 @@ its values to match your configuration:
 - CONTRACT_PATH: Keep it as it is ./../contracts
 - CONTRACT_ADDRESS: Keep it undefined, this variable is going to
 be updated by the automated deploy script after deployment of the smart contract
+- CONTRACT_ETH_ADDRESS: Keep it undefined, this variable is going to
+be updated by the automated deploy script after deployment of the ETH smart contract
 - GANACHE_PORT: Keep it on 8545
 - MNEMONIC: Place here your development 12 words mnemonic
 

@@ -11,6 +11,7 @@
     "ganache-cli": "^6.4.4",
     "mocha": "^6.1.4",
     "solc": "^0.5.9",
+    "solhint": "^2.1.2",
     "tern": "^0.24.0",
     "web3": "^1.0.0-beta.55"
   },
@@ -24,7 +25,7 @@
   },
   "scripts": {
     "test": "npx mocha --timeout 15000 --exit tests/*.test.js",
-    "lint": "npx eslint utils/*.js && npx eslint tests/*.js"
+    "lint": "npx eslint utils/*.js && npx eslint tests/*.js && solhint contracts/*.sol"
   },
   "author": "",
   "license": "ISC"

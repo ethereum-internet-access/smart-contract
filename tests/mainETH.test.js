@@ -17,4 +17,15 @@ describe('ETH smart contract tests', function () {
     symbol.should.be.a('string')
     symbol.should.equal('InternetAccessETH')
   })
+
+  it('Should check if there\'s connection availability', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let connectionAvailable0 = await contract.methods.checkConnectionAvailable(0).call()
+    console.log(connectionAvailable0)
+    let connectionAvailable100 = await contract.methods.checkConnectionAvailable(100).call()
+    console.log(connectionAvailable100)
+    let connectionAvailable300 = await contract.methods.checkConnectionAvailable(300).call()
+    console.log(connectionAvailable300)
+  })
 })

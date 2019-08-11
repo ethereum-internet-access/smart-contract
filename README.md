@@ -101,3 +101,11 @@ In order to check code style rules match StandardJS conventions:
 ```
 (venv) $ npm run lint
 ```
+
+## Linting (Solidity smart contracts)
+
+In order to check code style rules match [solhint](https://github.com/protofire/solhint) conventions:
+
+```
+(venv) $ solhint -c .solhint.json contracts/InternetAccessETH.sol
+```

@@ -41,6 +41,7 @@ describe('ETH smart contract tests', function () {
     connection.should.have.property('events')
     connection.events.should.have.property('ConnectionRequest')
     connection.events.ConnectionRequest.returnValues._from.should.equal(accounts[1])
+    connection.events.ConnectionRequest.returnValues._stake.should.equal(false)
     let currentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
     currentBalance.should.equal('3000000000000000')
   })

@@ -44,11 +44,11 @@ contract InternetAccessETH {
     uint OnFlyNum;
     require(checkConAva(OnFlyNum) && msg.value >= _minPaymnt && msg.value <= _maxPaymnt);
     bool WithStake;
+    _onFlyBalance.add(msg.value);
     WithStake = (msg.value <= address(this).balance.sub(_onFlyBalance).sub(_stakeDue));
     Connections[msg.sender].Blknbr = block.number;
     Connections[msg.sender].Amount = msg.value;
     Connections[msg.sender].WithStake = WithStake;
-    _onFlyBalance.add(msg.value);
     if (WithStake)
       _stakeDue.add(msg.value);
     OnFlyCon[OnFlyNum].User = msg.sender;

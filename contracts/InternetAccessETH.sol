@@ -14,7 +14,7 @@ contract InternetAccessETH is Ownable {
   uint256 private onFlyBalance;
   uint256 private stakeDue;
 
-  event ConnectionRequest(address indexed _from, uint256 _value, bool _stake, uint256 _balance);
+  event ConnectionRequest(address indexed _from, uint256 _value, bool _stake, uint256 _balance, uint256 _onFlyNumber);
 
   struct Connection {
     uint256 blockNumber;
@@ -42,8 +42,8 @@ contract InternetAccessETH is Ownable {
      @dev Requests an ETH paid Internet connection.
   */
   function reqConnectionWithETH() public payable {
-    uint onFlyNum;
-    require(checkConnectionAvailable(onFlyNum), "No connection available");
+    int256 onFlyNumber = checkConnectionAvailable();
+    // require(checkConnectionAvailable(onFlyNumber), "No connection available");
     require(msg.value >= minPayment, "Value under minimum");
     require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;
@@ -55,24 +55,22 @@ contract InternetAccessETH is Ownable {
     if (withStake) {
       stakeDue.add(msg.value);
     }
-    onFlyConnections[onFlyNum].user = msg.sender;
-    onFlyConnections[onFlyNum].allocated = true;
-    emit ConnectionRequest(msg.sender, msg.value, withStake, address(this).balance);
+    onFlyConnections[uint256(onFlyNumber)].user = msg.sender;
+    onFlyConnections[uint256(onFlyNumber)].allocated = true;
+    emit ConnectionRequest(msg.sender, msg.value, withStake, address(this).balance, uint256(onFlyNumber));
     return;
   }
 
   /**
      @dev Checks if is there another connection available
   */
-  function checkConnectionAvailable(uint _onFlyNum) public view returns (bool) {
-    uint256 i = 0;
-    while (i < 10 && onFlyConnections[i].allocated) i++;
-    if (i < 10) {
-      _onFlyNum = i;
-      return true;
-    } else {
-      return false;
+  function checkConnectionAvailable() public view returns (int256) {
+    for(int256 i = 0; i < 10; i++) {
+      if (!onFlyConnections[uint256(i)].allocated) {
+        return i;
+      }
     }
+    return -1;
   }
 
   /**

@@ -22,12 +22,8 @@ describe('ETH smart contract tests', function () {
   it('Should check if there\'s connection availability', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let connectionAvailable0 = await contract.methods.checkConnectionAvailable(0).call()
-    connectionAvailable0.should.equal(true)
-    let connectionAvailable100 = await contract.methods.checkConnectionAvailable(100).call()
-    connectionAvailable100.should.equal(true)
-    let connectionAvailable300 = await contract.methods.checkConnectionAvailable(300).call()
-    connectionAvailable300.should.equal(true)
+    let connectionAvailable = await contract.methods.checkConnectionAvailable().call()
+    connectionAvailable.should.equal('0')
   })
 
   it('Should allow to require connection with ETH', async () => {
@@ -37,12 +33,33 @@ describe('ETH smart contract tests', function () {
     let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
     previousBalance.should.equal('0')
     let connection = await contract.methods.reqConnectionWithETH().send(
-      { from: accounts[1], value: 3000000000000000, gas: 1000000 })
+      { from: accounts[1], value: '3000000000000000', gas: '1000000' })
     connection.should.have.property('events')
     connection.events.should.have.property('ConnectionRequest')
     connection.events.ConnectionRequest.returnValues._from.should.equal(accounts[1])
     connection.events.ConnectionRequest.returnValues._stake.should.equal(false)
+    connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('0')
     let currentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
     currentBalance.should.equal('3000000000000000')
+  })
+
+  it('Should allow two different users to require connection with ETH', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let connectionA = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '3000000000000000', gas: '1000000' })
+    connectionA.should.have.property('events')
+    connectionA.events.should.have.property('ConnectionRequest')
+    connectionA.events.ConnectionRequest.returnValues._from.should.equal(accounts[1])
+    connectionA.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('1')
+    connectionA.events.ConnectionRequest.returnValues._stake.should.equal(true)
+    let connectionB = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[2], value: '3000000000000000', gas: '1000000' })
+    connectionB.should.have.property('events')
+    connectionB.events.should.have.property('ConnectionRequest')
+    connectionB.events.ConnectionRequest.returnValues._from.should.equal(accounts[2])
+    connectionB.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('2')
+    connectionB.events.ConnectionRequest.returnValues._stake.should.equal(true)
   })
 })

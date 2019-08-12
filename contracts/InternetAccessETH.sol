@@ -42,16 +42,18 @@ contract InternetAccessETH is Ownable {
      @dev Requests an ETH paid Internet connection.
   */
   function reqConnectionWithETH() public payable {
+    bool connectionAvailable;
     uint onFlyNum;
-    require(checkConnectionAvailable(onFlyNum), "No connection available");
+    (connectionAvailable, onFlyNum) = checkConnectionAvailable; 
+    require(connectionAvailable, "No connection available");
     require(msg.value >= minPayment, "Value under minimum");
     require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;
-    withStake = (address(this).balance.sub(msg.value).sub(onFlyBalance).sub(stakeDue) > 0);
+    onFlyBalance.add(msg.value);
+    withStake = (address(this).balance.sub(msg.value).sub(onFlyBalance).sub(stakeDue) >= 0);
     connections[msg.sender].blockNumber = block.number;
     connections[msg.sender].amount = msg.value;
     connections[msg.sender].withStake = withStake;
-    onFlyBalance.add(msg.value);
     if (withStake) {
       stakeDue.add(msg.value);
     }
@@ -64,14 +66,13 @@ contract InternetAccessETH is Ownable {
   /**
      @dev Checks if is there another connection available
   */
-  function checkConnectionAvailable(uint _onFlyNum) public view returns (bool) {
+  function checkConnectionAvailable() public view returns (bool, uint) {
     uint256 i = 0;
     while (i < 10 && onFlyConnections[i].allocated) i++;
     if (i < 10) {
-      _onFlyNum = i;
-      return true;
+      return (true, i);
     } else {
-      return false;
+      return (false, i);
     }
   }
 
@@ -85,7 +86,7 @@ contract InternetAccessETH is Ownable {
     uint lastAllowedBlock = block.number.sub(6500); /** 24h aprox. */
     uint i;
     availableEarnings = address(this).balance.sub(_balanceLeft);
-    while (i < 10 && availableEarnings > 0) {
+    while (i < 10) {
       if (onFlyConnections[i].allocated) {
         if (connections[onFlyConnections[i].user].blockNumber > lastAllowedBlock) {
           availableEarnings.sub(connections[onFlyConnections[i].user].amount);

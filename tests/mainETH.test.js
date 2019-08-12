@@ -62,4 +62,20 @@ describe('ETH smart contract tests', function () {
     connectionB.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('2')
     connectionB.events.ConnectionRequest.returnValues._stake.should.equal(true)
   })
+
+  it('Should revert connection request in case connections available exhausted', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    for (let i = 0; i < 10; i++) {
+      try {
+        let connection = await contract.methods.reqConnectionWithETH().send(
+          { from: accounts[i], value: '3000000000000000', gas: '1000000' })
+        connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal((3 + i).toString())
+      } catch (error) {
+        // Since previous test allocated 3 connections (0, 1, 2) we have 7 left
+        i.should.be.above(6)
+      }
+    }
+  })
 })

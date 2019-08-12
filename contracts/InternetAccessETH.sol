@@ -43,7 +43,7 @@ contract InternetAccessETH is Ownable {
   */
   function reqConnectionWithETH() public payable {
     int256 onFlyNumber = checkConnectionAvailable();
-    // require(checkConnectionAvailable(onFlyNumber), "No connection available");
+    require(onFlyNumber >= 0, "No connection available");
     require(msg.value >= minPayment, "Value under minimum");
     require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;

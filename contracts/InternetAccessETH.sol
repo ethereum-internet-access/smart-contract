@@ -15,9 +15,10 @@ contract InternetAccessETH is Ownable {
   uint256 private stakeDue;
 
   event ConnectionRequest(address indexed _from, uint256 _value, bool _stake, uint256 _balance, uint256 _onFlyNumber);
+  event EarningsCollection(uint256 _currentTimestamp, uint256 _connectionTimestamp);
 
   struct Connection {
-    uint256 blockNumber;
+    uint256 timestamp;
     uint256 amount;
     bool withStake;
   }
@@ -48,7 +49,7 @@ contract InternetAccessETH is Ownable {
     require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;
     withStake = (address(this).balance.sub(msg.value).sub(onFlyBalance).sub(stakeDue) > 0);
-    connections[msg.sender].blockNumber = block.number;
+    connections[msg.sender].timestamp = now;
     connections[msg.sender].amount = msg.value;
     connections[msg.sender].withStake = withStake;
     onFlyBalance.add(msg.value);
@@ -80,26 +81,28 @@ contract InternetAccessETH is Ownable {
   function collectEarnings(uint _balanceLeft) public {
     require(isOwner(), "Only contract owner can collect earnings");
     uint availableEarnings; /** Available earnings */
-    uint lastAllowedBlock = block.number.sub(6500); /** 24h aprox. */
+    uint lastTimestampAllowed = now.sub(3600 * 24); /** 24h aprox. */
     uint i;
     availableEarnings = address(this).balance.sub(_balanceLeft);
     while (i < 10 && availableEarnings > 0) {
       if (onFlyConnections[i].allocated) {
-        if (connections[onFlyConnections[i].user].blockNumber > lastAllowedBlock) {
-          availableEarnings.sub(connections[onFlyConnections[i].user].amount);
-          if (connections[onFlyConnections[i].user].withStake)
-            availableEarnings.sub(connections[onFlyConnections[i].user].amount);
-        } else {
-          onFlyBalance.sub(connections[onFlyConnections[i].user].amount);
-          if (connections[onFlyConnections[i].user].withStake)
-            stakeDue.sub(connections[onFlyConnections[i].user].amount);
-          onFlyConnections[i].allocated = false;
+        if (connections[onFlyConnections[i].user].timestamp < lastTimestampAllowed) {
+          emit EarningsCollection(now, connections[onFlyConnections[i].user].timestamp);
         }
+        /*       availableEarnings.sub(connections[onFlyConnections[i].user].amount); */
+        /*       if (connections[onFlyConnections[i].user].withStake) */
+        /*         availableEarnings.sub(connections[onFlyConnections[i].user].amount); */
+        /*     } else { */
+        /*       onFlyBalance.sub(connections[onFlyConnections[i].user].amount); */
+        /*       if (connections[onFlyConnections[i].user].withStake) */
+        /*         stakeDue.sub(connections[onFlyConnections[i].user].amount); */
+        onFlyConnections[i].allocated = false;
+        /*     } */
       }
       i++;
     }
-    require(availableEarnings > 0, "There isn't balance enough");
-    msg.sender.transfer(availableEarnings);
+    /* require(availableEarnings > 0, "There isn't balance enough"); */
+    /* msg.sender.transfer(availableEarnings); */
   }
 
   /**

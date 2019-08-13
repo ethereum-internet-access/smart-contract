@@ -8,6 +8,20 @@ const WEB3_OPTIONS = { defaultGasPrice: 0, transactionConfirmationBlocks: 1 }
 const WEB3 = new WEB3_API(`http://127.0.0.1:${process.env.GANACHE_PORT}`, null, WEB3_OPTIONS)
 const FS = require('fs')
 
+const TIME_TRAVEL = (time) => {
+  return new Promise((resolve, reject) => {
+    WEB3.currentProvider.send({
+      jsonrpc: '2.0',
+      method: 'evm_increaseTime',
+      params: [time],
+      id: new Date().getTime()
+    }, (err, result) => {
+      if (err) { return reject(err) }
+      return resolve(result)
+    })
+  })
+}
+
 describe('ETH smart contract tests', function () {
   it('Smart contract name should equal InternetAccessETH', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
@@ -77,5 +91,27 @@ describe('ETH smart contract tests', function () {
         i.should.be.above(6)
       }
     }
+  })
+
+  it('Should avoid non-owner to collect earnings', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    try {
+      await contract.methods.collectEarnings('3000000000000000').send(
+        { from: accounts[1], gas: '1000000' })
+    } catch (err) {
+      err.should.be.an('Error')
+    }
+  })
+
+  it('Should avoid the owner to collect earnings before 24 hours', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    await TIME_TRAVEL(12 * 3600)
+    let collectResponse = await contract.methods.collectEarnings('0').send(
+      { from: accounts[0], gas: '1000000' })
+    collectResponse.events.should.eql({})
   })
 })

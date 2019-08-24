@@ -118,14 +118,6 @@ contract InternetAccessETH is Ownable {
           }
           connections[onFlyConnections[i].key].amount = 0;
         }
-        /*       availableEarnings.sub(connections[onFlyConnections[i].user].amount); */
-        /*       if (connections[onFlyConnections[i].user].withStake) */
-        /*         availableEarnings.sub(connections[onFlyConnections[i].user].amount); */
-        /*     } else { */
-        /*       onFlyBalance.sub(connections[onFlyConnections[i].user].amount); */
-        /*       if (connections[onFlyConnections[i].user].withStake) */
-        /*         stakeDue.sub(connections[onFlyConnections[i].user].amount); */
-        /*     } */
       }
       i++;
     }

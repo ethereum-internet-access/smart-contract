@@ -100,7 +100,7 @@ contract InternetAccessETH is Ownable {
   function collectEarnings() public {
     require(isOwner(), "Only contract owner can collect earnings");
     uint256 lastTimestampAllowed = now.sub(3600 * 24); /** 24h aprox. */
-    uint256 i;
+    uint256 i = 0;
     uint256 availableEarnings = 0;
     while (i < 10) {
       if (onFlyConnections[i].allocated) {
@@ -131,17 +131,28 @@ contract InternetAccessETH is Ownable {
      Hat user's last connection stake, then both user and owner will lose their funds.
      Hat user's last connection no stake, then user will get a refund.
   */
-  /* function penalize () public { */
-  /*   uint256 i = 0; */
-  /*   while (i < 10 && onFlyConnections[i].user != msg.sender) i++; */
-  /*   require(i < 10 && onFlyConnections[i].allocated); */
-  /*   onFlyConnections[i].allocated = false; */
-  /*   onFlyBalance.sub(connections[msg.sender].amount); */
-  /*   if (connections[msg.sender].withStake) { */
-  /*     stakeDue.sub(connections[msg.sender].amount); */
-  /*     address(0).transfer(connections[msg.sender].amount.mul(2)); */
-  /*   } else { */
-  /*     msg.sender.transfer(connections[msg.sender].amount); */
-  /*   } */
-  /* } */
+  function penalize () public {
+    uint256 i = 0;
+    uint256 lastTimestampAllowed = now.sub(3600 * 24); /** 24h aprox. */
+    while (i < 10) {
+      // require allocated connection
+      if (onFlyConnections[i].allocated) {
+        // sender check
+        if (onFlyConnections[i].user == msg.sender) {
+          // penalization should be carried out within 24 hours
+          if (connections[onFlyConnections[i].key].timestamp >= lastTimestampAllowed) {
+            if (!connections[onFlyConnections[i].key].withStake) {
+              msg.sender.transfer(connections[onFlyConnections[i].key].amount);
+            } else {
+              address(0).transfer(connections[onFlyConnections[i].key].amount);
+              stakeDue.sub(connections[onFlyConnections[i].key].amount);
+            }
+            connections[onFlyConnections[i].key].amount = 0;
+            onFlyConnections[i].allocated = false;
+          }
+        }
+      }
+      i++;
+    }
+  }
 }

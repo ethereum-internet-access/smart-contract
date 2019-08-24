@@ -127,14 +127,16 @@ describe('ETH smart contract tests', function () {
     let accounts = await WEB3.eth.getAccounts()
     let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
     await TIME_TRAVEL(12 * 3600)
-    let previousBalance = await WEB3.eth.getBalance(accounts[0])
-    let gasPrice = await WEB3.eth.getGasPrice()
+    let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let gasPrice = BigInt(await WEB3.eth.getGasPrice())
     let collectResponse = await contract.methods.collectEarnings().send(
       { from: accounts[0], gas: '1000000' })
-    console.log(gasPrice)
-    console.log(JSON.stringify(collectResponse, null, 4))
-    let currentBalance = await WEB3.eth.getBalance(accounts[0])
-    currentBalance.should.equal(previousBalance)
+    let currentBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let cumulativeGasUsed = BigInt(collectResponse.cumulativeGasUsed)
+    if (currentBalance !== previousBalance - gasPrice * cumulativeGasUsed) {
+      // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
+      throw new Error('Current balance does not match previous one minus fee')
+    }
     collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('0')
     collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('29000000000000000')
   })

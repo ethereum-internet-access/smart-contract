@@ -12,11 +12,25 @@ contract InternetAccessETH is Ownable {
   uint256 private minPayment = 2000000000000000; // 0.002 ETH $0.5 at Aug.02.19
   uint256 private maxPayment = 100000000000000000; // 0.1 ETH $22 at Aug.02.19
   uint256 private onFlyBalance;
-  uint256 private stakeDue;
+  uint256 public stakeDue;
 
-  event ConnectionRequest(address indexed _from, uint256 _value, bool _stake, uint256 _balance, uint256 _onFlyNumber, uint256 _stakeDue);
-  event EarningsCollection(uint256 _currentTimestamp, uint256 _connectionTimestamp, uint256 _amount, uint256 _balance);
-  event TotalEarningsCollection(uint256 _amount, uint256 _balance, uint256 _stakeDue);
+  event ConnectionRequest(address indexed _from,
+                          uint256 _value,
+                          bool _stake,
+                          uint256 _balance,
+                          uint256 _onFlyNumber,
+                          uint256 _stakeDue);
+
+  event EarningsCollection(uint256 _currentTimestamp,
+                           uint256 _connectionTimestamp,
+                           uint256 _amount,
+                           uint256 _balance,
+                           uint256 _stakeDue,
+                           bool _stake);
+
+  event TotalEarningsCollection(uint256 _amount,
+                                uint256 _balance,
+                                uint256 _stakeDue);
 
   struct Connection {
     uint256 timestamp;
@@ -94,13 +108,15 @@ contract InternetAccessETH is Ownable {
           emit EarningsCollection(now,
                                   connections[onFlyConnections[i].key].timestamp,
                                   connections[onFlyConnections[i].key].amount,
-                                  address(this).balance);
+                                  address(this).balance,
+                                  stakeDue,
+                                  connections[onFlyConnections[i].key].withStake);
           onFlyConnections[i].allocated = false;
           availableEarnings = availableEarnings.add(connections[onFlyConnections[i].key].amount);
-          connections[onFlyConnections[i].key].amount = 0;
           if(connections[onFlyConnections[i].key].withStake) {
             stakeDue = stakeDue.sub(connections[onFlyConnections[i].key].amount);
           }
+          connections[onFlyConnections[i].key].amount = 0;
         }
         /*       availableEarnings.sub(connections[onFlyConnections[i].user].amount); */
         /*       if (connections[onFlyConnections[i].user].withStake) */
@@ -115,7 +131,6 @@ contract InternetAccessETH is Ownable {
     }
     assert(availableEarnings <= address(this).balance);
     emit TotalEarningsCollection(availableEarnings, address(this).balance, stakeDue);
-    stakeDue = stakeDue.sub(availableEarnings);
     msg.sender.transfer(availableEarnings);
   }
 

@@ -63,7 +63,7 @@ contract InternetAccessETH is Ownable {
     require(msg.value >= minPayment, "Value under minimum");
     require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;
-    withStake = (address(this).balance.sub(msg.value).sub(stakeDue) > 0);
+    withStake = (address(this).balance.sub(msg.value).sub(stakeDue) >= msg.value);
     uint256 timestamp = now;
     uint256 connectionKey = uint256(keccak256(abi.encodePacked(msg.sender, msg.value, timestamp, withStake)));
     connections[connectionKey].timestamp = timestamp;

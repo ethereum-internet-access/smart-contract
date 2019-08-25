@@ -287,6 +287,8 @@ describe('ETH smart contract tests', function () {
     let previousOwnerBalance = await BigInt(await WEB3.eth.getBalance(accounts[0]))
     let previousFirstUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[1]))
     let previousSecondUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[2]))
+    let previousStakeDue = await contract.methods.stakeDue().call()
+    previousStakeDue.should.equal('2000000000000000')
     let penalizeResponse = await contract.methods.penalize().send(
       { from: accounts[2], gas: '1000000' })
     let cumulativeGasUsed = BigInt(penalizeResponse.cumulativeGasUsed)
@@ -305,6 +307,8 @@ describe('ETH smart contract tests', function () {
     if (finalSecondUserBalance !== previousSecondUserBalance - gasPrice * cumulativeGasUsed) {
       throw new Error('Staked user balance does not match previous balance minus penalization fee')
     }
+    let finalStakeDue = await contract.methods.stakeDue().call()
+    finalStakeDue.should.equal('0')
   })
 
   it('Should allow the owner to collect unstaked earnings after 24 hours and one successful penalization', async () => {
@@ -329,5 +333,30 @@ describe('ETH smart contract tests', function () {
       // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
       throw new Error('Current balance does not match previous plus total collected one minus fee')
     }
+  })
+
+  it('Should prevent staking a connection with more stake than available', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    previousBalance.should.equal('0')
+    let stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('0')
+    let firstConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '7000000000000000', gas: '1000000' })
+    stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('0')
+    firstConnection.events.ConnectionRequest.returnValues._stake.should.equal(false)
+    let secondConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[2], value: '2000000000000000', gas: '1000000' })
+    stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('2000000000000000')
+    secondConnection.events.ConnectionRequest.returnValues._stake.should.equal(true)
+    let thirdConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[3], value: '90000000000000000', gas: '1000000' })
+    stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('2000000000000000')
+    thirdConnection.events.ConnectionRequest.returnValues._stake.should.equal(false)
   })
 })

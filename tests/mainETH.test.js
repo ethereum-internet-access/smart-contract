@@ -187,4 +187,63 @@ describe('ETH smart contract tests', function () {
     let connectionAvailable = await contract.methods.checkConnectionAvailable().call()
     connectionAvailable.should.equal('0')
   })
+
+  it('Should allow to require connection without stake and recover funds', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    previousBalance.should.equal('0')
+    let connection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '7000000000000000', gas: '1000000' })
+    connection.should.have.property('events')
+    connection.events.should.have.property('ConnectionRequest')
+    connection.events.ConnectionRequest.returnValues._from.should.equal(accounts[1])
+    connection.events.ConnectionRequest.returnValues._stake.should.equal(false)
+    connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('0')
+    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    currentContractBalance.should.equal('7000000000000000')
+    let previousUserBalance = BigInt(await WEB3.eth.getBalance(accounts[1]))
+    let gasPrice = BigInt(await WEB3.eth.getGasPrice())
+    let penalizeResponse = await contract.methods.penalize().send(
+      { from: accounts[1], gas: '1000000' })
+    let cumulativeGasUsed = BigInt(penalizeResponse.cumulativeGasUsed)
+    let finalUserBalance = BigInt(await WEB3.eth.getBalance(accounts[1]))
+    if (finalUserBalance !== previousUserBalance + BigInt('7000000000000000') - gasPrice * cumulativeGasUsed) {
+      // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
+      throw new Error('Current user balance does not match previous plus refund minus penalize invocation fee')
+    }
+    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    finalContractBalance.should.equal('0')
+  })
+
+  it('Should avoid a user recovering funds after 24 hours (without stake)', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    previousBalance.should.equal('0')
+    let connection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '7000000000000000', gas: '1000000' })
+    connection.should.have.property('events')
+    connection.events.should.have.property('ConnectionRequest')
+    connection.events.ConnectionRequest.returnValues._from.should.equal(accounts[1])
+    connection.events.ConnectionRequest.returnValues._stake.should.equal(false)
+    connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('0')
+    await TIME_TRAVEL(36 * 3600)
+    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    currentContractBalance.should.equal('7000000000000000')
+    let previousUserBalance = BigInt(await WEB3.eth.getBalance(accounts[1]))
+    let gasPrice = BigInt(await WEB3.eth.getGasPrice())
+    let penalizeResponse = await contract.methods.penalize().send(
+      { from: accounts[1], gas: '1000000' })
+    let cumulativeGasUsed = BigInt(penalizeResponse.cumulativeGasUsed)
+    let finalUserBalance = BigInt(await WEB3.eth.getBalance(accounts[1]))
+    if (finalUserBalance !== previousUserBalance - gasPrice * cumulativeGasUsed) {
+      // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
+      throw new Error('Current user balance does not match previous minus penalize invocation fee')
+    }
+    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    finalContractBalance.should.equal('7000000000000000')
+  })
 })

@@ -11,7 +11,6 @@ contract InternetAccessETH is Ownable {
 
   uint256 private minPayment = 2000000000000000; // 0.002 ETH $0.5 at Aug.02.19
   uint256 private maxPayment = 100000000000000000; // 0.1 ETH $22 at Aug.02.19
-  uint256 private onFlyBalance;
   uint256 public stakeDue;
 
   event ConnectionRequest(address indexed _from,
@@ -64,13 +63,12 @@ contract InternetAccessETH is Ownable {
     require(msg.value >= minPayment, "Value under minimum");
     require(msg.value <= maxPayment, "Value over maximum");
     bool withStake;
-    withStake = (address(this).balance.sub(msg.value).sub(onFlyBalance).sub(stakeDue) > 0);
+    withStake = (address(this).balance.sub(msg.value).sub(stakeDue) > 0);
     uint256 timestamp = now;
     uint256 connectionKey = uint256(keccak256(abi.encodePacked(msg.sender, msg.value, timestamp, withStake)));
     connections[connectionKey].timestamp = timestamp;
     connections[connectionKey].amount = msg.value;
     connections[connectionKey].withStake = withStake;
-    onFlyBalance.add(msg.value);
     if (withStake) {
       stakeDue = stakeDue.add(msg.value);
     }

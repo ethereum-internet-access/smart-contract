@@ -109,3 +109,46 @@ In order to check code style rules match [solhint](https://github.com/protofire/
 ```
 (venv) $ solhint -c .solhint.json contracts/InternetAccessETH.sol
 ```
+
+## Linting, deploying & testing workflow
+
+With ganache-cli running, one-liner:
+
+```
+(venv) $ npm run lint && node utils/deploy.js && npm run test
+```
+
+Sample output:
+
+```
+Compilation OK
+Compilation OK
+InternetAccess deployed on address 0xBD6EE51364a928bF53ccD392B79310852BeC2708
+InternetAccessETH deployed on address 0x538bA2729884F87c4924f52B3718CeA7dae7Ca21
+
+
+  Token smart contract tests
+    ✓ Smart contract symbol should equal IntacTok (46ms)
+
+  ETH smart contract tests
+    ✓ Smart contract name should equal InternetAccessETH
+    ✓ Should check if there's connection availability
+    ✓ Should allow to require connection with ETH (73ms)
+    ✓ Should allow to require a second connection with ETH and stake (73ms)
+    ✓ Should allow two different users to require connection with ETH (95ms)
+    ✓ Should revert connection request in case connections available exhausted (362ms)
+    ✓ Should check there's no connection availability
+    ✓ Should avoid non-owner to collect earnings
+    ✓ Should avoid the owner to collect earnings before 24 hours (60ms)
+    ✓ Should allow the owner to collect earnings after 24 hours (181ms)
+    ✓ Should check there's connection availability again
+    ✓ Should allow to require connection without stake and recover funds (107ms)
+    ✓ Should avoid a user recovering funds after 24 hours (without stake) (105ms)
+    ✓ Should allow the owner to collect earnings after 24 hours and one penalization attempt (63ms)
+    ✓ Should allow to require connection with stake and penalize (171ms)
+    ✓ Should allow the owner to collect unstaked earnings after 24 hours and one successful penalization (76ms)
+    ✓ Should prevent staking a connection with more stake than available (158ms)
+
+
+  18 passing (2s)
+```

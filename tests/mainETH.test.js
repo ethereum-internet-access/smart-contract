@@ -246,4 +246,64 @@ describe('ETH smart contract tests', function () {
     let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
     finalContractBalance.should.equal('7000000000000000')
   })
+
+  it('Should allow the owner to collect earnings after 24 hours and one penalization attempt', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let collectResponse = await contract.methods.collectEarnings().send(
+      { from: accounts[0], gas: '1000000' })
+    let gasPrice = BigInt(await WEB3.eth.getGasPrice())
+    collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('7000000000000000')
+    collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('7000000000000000')
+    let stakeDue = await contract.methods.stakeDue().call()
+    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    contractCurrentBalance.should.equal('0')
+    stakeDue.should.equal('0')
+    let cumulativeGasUsed = BigInt(collectResponse.cumulativeGasUsed)
+    let currentBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let totalCollected = BigInt(collectResponse.events.TotalEarningsCollection.returnValues._amount)
+    if (currentBalance !== previousBalance + totalCollected - gasPrice * cumulativeGasUsed) {
+      // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
+      throw new Error('Current balance does not match previous plus total collected one minus fee')
+    }
+  })
+
+  it('Should allow to require connection with stake and penalize', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    previousBalance.should.equal('0')
+    let firstConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '7000000000000000', gas: '1000000' })
+    firstConnection.events.ConnectionRequest.returnValues._stake.should.equal(false)
+    let secondConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[2], value: '2000000000000000', gas: '1000000' })
+    secondConnection.events.ConnectionRequest.returnValues._stake.should.equal(true)
+    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    currentContractBalance.should.equal('9000000000000000')
+    let previousOwnerBalance = await BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let previousFirstUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[1]))
+    let previousSecondUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[2]))
+    let penalizeResponse = await contract.methods.penalize().send(
+      { from: accounts[2], gas: '1000000' })
+    let cumulativeGasUsed = BigInt(penalizeResponse.cumulativeGasUsed)
+    let gasPrice = BigInt(await WEB3.eth.getGasPrice())
+    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    finalContractBalance.should.equal('7000000000000000')
+    let finalOwnerBalance = await BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let finalFirstUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[1]))
+    let finalSecondUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[2]))
+    if (finalOwnerBalance !== previousOwnerBalance) {
+      throw new Error('Owner\'s balance does not match')
+    }
+    if (finalFirstUserBalance !== previousFirstUserBalance) {
+      throw new Error('Unstaked user balance does not match')
+    }
+    if (finalSecondUserBalance !== previousSecondUserBalance - gasPrice * cumulativeGasUsed) {
+      throw new Error('Staked user balance does not match previous balance minus penalization fee')
+    }
+  })
 })

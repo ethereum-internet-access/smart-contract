@@ -117,6 +117,7 @@ contract InternetAccessETH is Ownable {
             stakeDue = stakeDue.sub(connections[onFlyConnections[i].key].amount);
           }
           connections[onFlyConnections[i].key].amount = 0;
+          connections[onFlyConnections[i].key].withStake = false;
         }
       }
       i++;
@@ -145,9 +146,10 @@ contract InternetAccessETH is Ownable {
               msg.sender.transfer(connections[onFlyConnections[i].key].amount);
             } else {
               address(0).transfer(connections[onFlyConnections[i].key].amount);
-              stakeDue.sub(connections[onFlyConnections[i].key].amount);
             }
+            stakeDue = stakeDue.sub(connections[onFlyConnections[i].key].amount);
             connections[onFlyConnections[i].key].amount = 0;
+            connections[onFlyConnections[i].key].withStake = false;
             onFlyConnections[i].allocated = false;
           }
         }

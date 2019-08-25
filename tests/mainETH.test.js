@@ -110,6 +110,13 @@ describe('ETH smart contract tests', function () {
     }
   })
 
+  it('Should check there\'s no connection availability', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let connectionAvailable = await contract.methods.checkConnectionAvailable().call()
+    connectionAvailable.should.equal('-1')
+  })
+
   it('Should avoid non-owner to collect earnings', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
@@ -172,5 +179,12 @@ describe('ETH smart contract tests', function () {
       // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
       throw new Error('Current balance does not match previous plus total collected one minus fee')
     }
+  })
+
+  it('Should check there\'s connection availability again', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let connectionAvailable = await contract.methods.checkConnectionAvailable().call()
+    connectionAvailable.should.equal('0')
   })
 })

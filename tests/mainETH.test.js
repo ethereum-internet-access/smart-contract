@@ -383,4 +383,53 @@ describe('ETH smart contract tests', function () {
       throw new Error('Current balance does not match previous plus total collected one minus fee')
     }
   })
+
+  it('Should allow the same user request different connection sessions (different locations?)', async () => {
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    previousBalance.should.equal('0')
+    let stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('0')
+    let firstConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '7000000000000000', gas: '1000000' })
+    stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('0')
+    firstConnection.events.ConnectionRequest.returnValues._stake.should.equal(false)
+    let secondConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '2000000000000000', gas: '1000000' })
+    stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('2000000000000000')
+    secondConnection.events.ConnectionRequest.returnValues._stake.should.equal(true)
+    let thirdConnection = await contract.methods.reqConnectionWithETH().send(
+      { from: accounts[1], value: '90000000000000000', gas: '1000000' })
+    stakeDue = await contract.methods.stakeDue().call()
+    stakeDue.should.equal('2000000000000000')
+    thirdConnection.events.ConnectionRequest.returnValues._stake.should.equal(false)
+  })
+
+  it('Should allow the owner to drain the contract again', async () => {
+    await TIME_TRAVEL(36 * 3600)
+    let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
+    let accounts = await WEB3.eth.getAccounts()
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let collectResponse = await contract.methods.collectEarnings().send(
+      { from: accounts[0], gas: '1000000' })
+    let gasPrice = BigInt(await WEB3.eth.getGasPrice())
+    collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('99000000000000000')
+    collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('99000000000000000')
+    let stakeDue = await contract.methods.stakeDue().call()
+    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    contractCurrentBalance.should.equal('0')
+    stakeDue.should.equal('0')
+    let cumulativeGasUsed = BigInt(collectResponse.cumulativeGasUsed)
+    let currentBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
+    let totalCollected = BigInt(collectResponse.events.TotalEarningsCollection.returnValues._amount)
+    if (currentBalance !== previousBalance + totalCollected - gasPrice * cumulativeGasUsed) {
+      // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
+      throw new Error('Current balance does not match previous plus total collected one minus fee')
+    }
+  })
 })

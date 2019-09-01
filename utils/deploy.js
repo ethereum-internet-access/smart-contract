@@ -48,12 +48,12 @@ const deploy = async () => {
   let deployedETHContract = await new web3.eth.Contract(JSON.parse(ABI)).deploy({ data: BYTECODE_ETH }).send({ from: owner, gas: '5000000' })
   FS.writeFileSync('./contracts/abi.json', ABI)
   FS.writeFileSync('./contracts/abiETH.json', ABI_ETH)
-  await updateEnvContractAddress(deployedContract.address)
-  await updateEnvContractETHAddress(deployedETHContract.address)
+  await updateEnvContractAddress(deployedContract._address)
+  await updateEnvContractETHAddress(deployedETHContract._address)
   let contractName = await deployedContract.methods.name().call()
-  console.log(`${contractName} deployed on address ${deployedContract.address}`)
+  console.log(`${contractName} deployed on address ${deployedContract._address}`)
   let contractETHName = await deployedETHContract.methods.name().call()
-  console.log(`${contractETHName} deployed on address ${deployedETHContract.address}`)
+  console.log(`${contractETHName} deployed on address ${deployedETHContract._address}`)
 }
 
 deploy()

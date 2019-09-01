@@ -101,3 +101,57 @@ In order to check code style rules match StandardJS conventions:
 ```
 (venv) $ npm run lint
 ```
+
+## Linting (Solidity smart contracts)
+
+In order to check code style rules match [solhint](https://github.com/protofire/solhint) conventions:
+
+```
+(venv) $ solhint -c .solhint.json contracts/InternetAccessETH.sol
+```
+
+## Linting, deploying & testing workflow
+
+With ganache-cli running, one-liner:
+
+```
+(venv) $ npm run lint && node utils/deploy.js && npm run test
+```
+
+Sample output:
+
+```
+Compilation OK
+Compilation OK
+InternetAccess deployed on address 0xBD6EE51364a928bF53ccD392B79310852BeC2708
+InternetAccessETH deployed on address 0x538bA2729884F87c4924f52B3718CeA7dae7Ca21
+
+
+  Token smart contract tests
+    ✓ Smart contract symbol should equal IntacTok (46ms)
+
+  ETH smart contract tests
+    ✓ Smart contract name should equal InternetAccessETH
+    ✓ Should check if there's connection availability
+    ✓ Should allow to require connection with ETH (75ms)
+    ✓ Should allow to require a second connection with ETH and stake (70ms)
+    ✓ Should allow two different users to require connection with ETH (116ms)
+    ✓ Should revert connection request in case connections available exhausted (356ms)
+    ✓ Should check there's no connection availability
+    ✓ Should avoid non-owner to collect earnings
+    ✓ Should avoid the owner to collect earnings before 24 hours (63ms)
+    ✓ Should allow the owner to collect earnings after 24 hours (186ms)
+    ✓ Should check there's connection availability again
+    ✓ Should allow to require connection without stake and recover funds (103ms)
+    ✓ Should avoid a user recovering funds after 24 hours (without stake) (100ms)
+    ✓ Should allow the owner to collect earnings after 24 hours and one penalization attempt (68ms)
+    ✓ Should allow to require connection with stake and penalize (170ms)
+    ✓ Should allow the owner to collect unstaked earnings after 24 hours and one successful penalization (72ms)
+    ✓ Should prevent staking a connection with more stake than available (154ms)
+    ✓ Should allow the owner to collect all earnings available (99ms)
+    ✓ Should allow the same user request different connection sessions (different locations?) (167ms)
+    ✓ Should allow the owner to drain the contract again (90ms)
+
+
+  18 passing (2s)
+```

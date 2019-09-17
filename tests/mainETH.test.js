@@ -25,7 +25,7 @@ const TIME_TRAVEL = (time) => {
 describe('ETH smart contract tests', function () {
   it('Smart contract name should equal InternetAccessETH', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let accounts = await WEB3.eth.getAccounts()
     accounts[0].should.be.a('string')
     let symbol = await contract.methods.name().call()
@@ -35,7 +35,7 @@ describe('ETH smart contract tests', function () {
 
   it('Should check if there\'s connection availability', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let connectionAvailable = await contract.methods.checkConnectionAvailable().call()
     connectionAvailable.should.equal('0')
   })
@@ -43,8 +43,8 @@ describe('ETH smart contract tests', function () {
   it('Should allow to require connection with ETH', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     previousBalance.should.equal('0')
     let connection = await contract.methods.reqConnectionWithETH().send(
       { from: accounts[1], value: '4000000000000000', gas: '1000000' })
@@ -53,15 +53,15 @@ describe('ETH smart contract tests', function () {
     connection.events.ConnectionRequest.returnValues._from.should.equal(accounts[1])
     connection.events.ConnectionRequest.returnValues._stake.should.equal(false)
     connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('0')
-    let currentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let currentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     currentBalance.should.equal('4000000000000000')
   })
 
   it('Should allow to require a second connection with ETH and stake', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     previousBalance.should.equal('4000000000000000')
     let connection = await contract.methods.reqConnectionWithETH().send(
       { from: accounts[2], value: '2000000000000000', gas: '1000000' })
@@ -70,14 +70,14 @@ describe('ETH smart contract tests', function () {
     connection.events.ConnectionRequest.returnValues._from.should.equal(accounts[2])
     connection.events.ConnectionRequest.returnValues._stake.should.equal(true)
     connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('1')
-    let currentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let currentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     currentBalance.should.equal('6000000000000000')
   })
 
   it('Should allow two different users to require connection with ETH', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let connectionA = await contract.methods.reqConnectionWithETH().send(
       { from: accounts[3], value: '3000000000000001', gas: '1000000' })
     connectionA.should.have.property('events')
@@ -97,7 +97,7 @@ describe('ETH smart contract tests', function () {
   it('Should revert connection request in case connections available exhausted', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     for (let i = 4; i < 20; i++) {
       try {
         let connection = await contract.methods.reqConnectionWithETH().send(
@@ -112,7 +112,7 @@ describe('ETH smart contract tests', function () {
 
   it('Should check there\'s no connection availability', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let connectionAvailable = await contract.methods.checkConnectionAvailable().call()
     connectionAvailable.should.equal('-1')
   })
@@ -120,7 +120,7 @@ describe('ETH smart contract tests', function () {
   it('Should avoid non-owner to collect earnings', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     try {
       await contract.methods.collectEarnings('3000000000000000').send(
         { from: accounts[1], gas: '1000000' })
@@ -132,7 +132,7 @@ describe('ETH smart contract tests', function () {
   it('Should avoid the owner to collect earnings before 24 hours', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     await TIME_TRAVEL(12 * 3600)
     let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
     let gasPrice = BigInt(await WEB3.eth.getGasPrice())
@@ -151,7 +151,7 @@ describe('ETH smart contract tests', function () {
     await TIME_TRAVEL(36 * 3600)
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
     let collectResponse = await contract.methods.collectEarnings().send(
       { from: accounts[0], gas: '1000000' })
@@ -168,7 +168,7 @@ describe('ETH smart contract tests', function () {
     collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('30000000000000042')
     collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('30000000000000042')
     let stakeDue = await contract.methods.stakeDue().call()
-    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     contractCurrentBalance.should.equal('0')
     stakeDue.should.equal('0')
     counter.should.equal(10)
@@ -183,7 +183,7 @@ describe('ETH smart contract tests', function () {
 
   it('Should check there\'s connection availability again', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let connectionAvailable = await contract.methods.checkConnectionAvailable().call()
     connectionAvailable.should.equal('0')
   })
@@ -191,8 +191,8 @@ describe('ETH smart contract tests', function () {
   it('Should allow to require connection without stake and recover funds', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     previousBalance.should.equal('0')
     let connection = await contract.methods.reqConnectionWithETH().send(
       { from: accounts[1], value: '7000000000000000', gas: '1000000' })
@@ -201,7 +201,7 @@ describe('ETH smart contract tests', function () {
     connection.events.ConnectionRequest.returnValues._from.should.equal(accounts[1])
     connection.events.ConnectionRequest.returnValues._stake.should.equal(false)
     connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('0')
-    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     currentContractBalance.should.equal('7000000000000000')
     let previousUserBalance = BigInt(await WEB3.eth.getBalance(accounts[1]))
     let gasPrice = BigInt(await WEB3.eth.getGasPrice())
@@ -213,15 +213,15 @@ describe('ETH smart contract tests', function () {
       // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
       throw new Error('Current user balance does not match previous plus refund minus penalize invocation fee')
     }
-    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     finalContractBalance.should.equal('0')
   })
 
   it('Should avoid a user recovering funds after 24 hours (without stake)', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     previousBalance.should.equal('0')
     let connection = await contract.methods.reqConnectionWithETH().send(
       { from: accounts[1], value: '7000000000000000', gas: '1000000' })
@@ -231,7 +231,7 @@ describe('ETH smart contract tests', function () {
     connection.events.ConnectionRequest.returnValues._stake.should.equal(false)
     connection.events.ConnectionRequest.returnValues._onFlyNumber.should.equal('0')
     await TIME_TRAVEL(36 * 3600)
-    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     currentContractBalance.should.equal('7000000000000000')
     let previousUserBalance = BigInt(await WEB3.eth.getBalance(accounts[1]))
     let gasPrice = BigInt(await WEB3.eth.getGasPrice())
@@ -243,14 +243,14 @@ describe('ETH smart contract tests', function () {
       // Due to https://github.com/chaijs/chai/issues/1195 ... chai cannot be used for this
       throw new Error('Current user balance does not match previous minus penalize invocation fee')
     }
-    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     finalContractBalance.should.equal('7000000000000000')
   })
 
   it('Should allow the owner to collect earnings after 24 hours and one penalization attempt', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
     let collectResponse = await contract.methods.collectEarnings().send(
       { from: accounts[0], gas: '1000000' })
@@ -258,7 +258,7 @@ describe('ETH smart contract tests', function () {
     collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('7000000000000000')
     collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('7000000000000000')
     let stakeDue = await contract.methods.stakeDue().call()
-    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     contractCurrentBalance.should.equal('0')
     stakeDue.should.equal('0')
     let cumulativeGasUsed = BigInt(collectResponse.cumulativeGasUsed)
@@ -273,8 +273,8 @@ describe('ETH smart contract tests', function () {
   it('Should allow to require connection with stake and penalize', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     previousBalance.should.equal('0')
     let firstConnection = await contract.methods.reqConnectionWithETH().send(
       { from: accounts[1], value: '7000000000000000', gas: '1000000' })
@@ -282,7 +282,7 @@ describe('ETH smart contract tests', function () {
     let secondConnection = await contract.methods.reqConnectionWithETH().send(
       { from: accounts[2], value: '2000000000000000', gas: '1000000' })
     secondConnection.events.ConnectionRequest.returnValues._stake.should.equal(true)
-    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let currentContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     currentContractBalance.should.equal('9000000000000000')
     let previousOwnerBalance = await BigInt(await WEB3.eth.getBalance(accounts[0]))
     let previousFirstUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[1]))
@@ -293,7 +293,7 @@ describe('ETH smart contract tests', function () {
       { from: accounts[2], gas: '1000000' })
     let cumulativeGasUsed = BigInt(penalizeResponse.cumulativeGasUsed)
     let gasPrice = BigInt(await WEB3.eth.getGasPrice())
-    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let finalContractBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     finalContractBalance.should.equal('7000000000000000')
     let finalOwnerBalance = await BigInt(await WEB3.eth.getBalance(accounts[0]))
     let finalFirstUserBalance = await BigInt(await WEB3.eth.getBalance(accounts[1]))
@@ -315,7 +315,7 @@ describe('ETH smart contract tests', function () {
     await TIME_TRAVEL(36 * 3600)
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
     let collectResponse = await contract.methods.collectEarnings().send(
       { from: accounts[0], gas: '1000000' })
@@ -323,7 +323,7 @@ describe('ETH smart contract tests', function () {
     collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('7000000000000000')
     collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('7000000000000000')
     let stakeDue = await contract.methods.stakeDue().call()
-    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     contractCurrentBalance.should.equal('0')
     stakeDue.should.equal('0')
     let cumulativeGasUsed = BigInt(collectResponse.cumulativeGasUsed)
@@ -338,8 +338,8 @@ describe('ETH smart contract tests', function () {
   it('Should prevent staking a connection with more stake than available', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     previousBalance.should.equal('0')
     let stakeDue = await contract.methods.stakeDue().call()
     stakeDue.should.equal('0')
@@ -364,7 +364,7 @@ describe('ETH smart contract tests', function () {
     await TIME_TRAVEL(36 * 3600)
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
     let collectResponse = await contract.methods.collectEarnings().send(
       { from: accounts[0], gas: '1000000' })
@@ -372,7 +372,7 @@ describe('ETH smart contract tests', function () {
     collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('99000000000000000')
     collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('99000000000000000')
     let stakeDue = await contract.methods.stakeDue().call()
-    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     contractCurrentBalance.should.equal('0')
     stakeDue.should.equal('0')
     let cumulativeGasUsed = BigInt(collectResponse.cumulativeGasUsed)
@@ -387,8 +387,8 @@ describe('ETH smart contract tests', function () {
   it('Should allow the same user request different connection sessions (different locations?)', async () => {
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
-    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
+    let previousBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     previousBalance.should.equal('0')
     let stakeDue = await contract.methods.stakeDue().call()
     stakeDue.should.equal('0')
@@ -413,7 +413,7 @@ describe('ETH smart contract tests', function () {
     await TIME_TRAVEL(36 * 3600)
     let abi = JSON.parse(FS.readFileSync('./contracts/abiETH.json', 'utf-8'))
     let accounts = await WEB3.eth.getAccounts()
-    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_ADDRESS)
+    let contract = new WEB3.eth.Contract(abi, process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     let previousBalance = BigInt(await WEB3.eth.getBalance(accounts[0]))
     let collectResponse = await contract.methods.collectEarnings().send(
       { from: accounts[0], gas: '1000000' })
@@ -421,7 +421,7 @@ describe('ETH smart contract tests', function () {
     collectResponse.events.TotalEarningsCollection.returnValues._amount.should.equal('99000000000000000')
     collectResponse.events.TotalEarningsCollection.returnValues._balance.should.equal('99000000000000000')
     let stakeDue = await contract.methods.stakeDue().call()
-    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_ADDRESS)
+    let contractCurrentBalance = await WEB3.eth.getBalance(process.env.CONTRACT_ETH_SIMPLE_ADDRESS)
     contractCurrentBalance.should.equal('0')
     stakeDue.should.equal('0')
     let cumulativeGasUsed = BigInt(collectResponse.cumulativeGasUsed)

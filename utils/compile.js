@@ -6,7 +6,7 @@ const FS = require('fs')
 
 const IAT_PATH = PATH.resolve(__dirname, process.env.CONTRACT_PATH, 'InternetAccessToken.sol')
 const IAT_SRC = FS.readFileSync(IAT_PATH, 'utf-8')
-const IAE_PATH = PATH.resolve(__dirname, process.env.CONTRACT_PATH, 'InternetAccessETH.sol')
+const IAE_PATH = PATH.resolve(__dirname, process.env.CONTRACT_PATH, 'InternetAccessETHSimple.sol')
 const IAE_SRC = FS.readFileSync(IAE_PATH, 'utf-8')
 const SAFE_MATH_PATH = PATH.resolve(__dirname, process.env.CONTRACT_PATH, 'SafeMath.sol')
 const SAFE_MATH_SRC = FS.readFileSync(SAFE_MATH_PATH, 'utf-8')
@@ -25,7 +25,7 @@ const generateSource = () => {
   return SAFE_MATH_SRC + '\n' + src
 }
 
-const generateSourceETH = () => {
+const generateSourceETHSimple = () => {
   let init = OWNABLE_SRC + '\n' + IAE_SRC
   let src = ''
   init.split('\n').forEach(
@@ -61,10 +61,10 @@ const CONFIG = {
   }
 }
 
-const CONFIG_ETH = {
+const CONFIG_ETH_SIMPLE = {
   language: 'Solidity',
   sources: {
-    'iae': { content: generateSourceETH() }
+    'iaes': { content: generateSourceETHSimple() }
   },
   settings: {
     outputSelection: {
@@ -76,8 +76,8 @@ const CONFIG_ETH = {
 const COMPILATION = SOLC.compile(JSON.stringify(CONFIG))
 showErrors(COMPILATION)
 const CONTRACTS = JSON.parse(COMPILATION).contracts
-const COMPILATION_ETH = SOLC.compile(JSON.stringify(CONFIG_ETH))
-showErrors(COMPILATION_ETH)
-const CONTRACTS_ETH = JSON.parse(COMPILATION_ETH).contracts
+const COMPILATION_ETH_SIMPLE = SOLC.compile(JSON.stringify(CONFIG_ETH_SIMPLE))
+showErrors(COMPILATION_ETH_SIMPLE)
+const CONTRACTS_ETH_SIMPLE = JSON.parse(COMPILATION_ETH_SIMPLE).contracts
 
-module.exports = { contracts: CONTRACTS, contractsETH: CONTRACTS_ETH }
+module.exports = { contracts: CONTRACTS, contractsETHSimple: CONTRACTS_ETH_SIMPLE }

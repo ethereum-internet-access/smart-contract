@@ -30,7 +30,7 @@ contract IntAcPayChan {
         recipient = _recipient;
     }
 
-    function createChannel() public payable {
+    function createChannel() public payable returns (uint256) {
 		require(msg.value > 2000000000000000);
 
 		// increment channel count and use it as a unique id
@@ -47,6 +47,7 @@ contract IntAcPayChan {
 
 		// log an event 
 		emit ChannelOpened(msg.sender, channelId, msg.value);
+        return channelId;
 	}
 
     function isValidSignature(uint256 amount, uint256 channelId, bytes memory signature)
